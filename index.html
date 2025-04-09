@@ -2,54 +2,91 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Markerless AR - Shoes</title>
+    <title>AR Marker Hiro - Fixed Position</title>
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.min.js"></script>
+    <style>
+      body { margin: 0; overflow: hidden; }
+      #resetBtn {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        z-index: 10;
+        padding: 8px 16px;
+        background: white;
+        border-radius: 8px;
+        border: none;
+        font-weight: bold;
+      }
+    </style>
   </head>
-  <body style="margin: 0; overflow: hidden;">
-    <a-scene
-      vr-mode-ui="enabled: false"
-      renderer="colorManagement: true; physicallyCorrectLights: true;"
-      xr-mode="immersive-ar"
-      webxr="optionalFeatures: hit-test; requiredFeatures: hit-test;"
-      embedded>
+  <body>
+    <button id="resetBtn">Reset Model</button>
 
+    <a-scene
+      embedded
+      vr-mode-ui="enabled: false"
+      arjs="sourceType: webcam; debugUIEnabled: false;"
+      renderer="colorManagement: true; physicallyCorrectLights: true;">
+
+      <!-- Aset Model -->
       <a-assets>
         <a-asset-item id="sepatu" src="leather_shoes.glb"></a-asset-item>
       </a-assets>
 
-      <!-- Pencahayaan -->
-      <a-light type="ambient" intensity="1"></a-light>
-      <a-light type="directional" position="0 2 2" intensity="0.7"></a-light>
-
-      <!-- Model -->
-      <a-entity
-        id="shoes"
+      <!-- Marker dan model sementara -->
+      <a-marker preset="hiro" id="marker">
+        <a-entity 
+          id="markerModel"
+          gltf-model="#sepatu"
+          scale="0.005 0.005 0.005"
+          visible="true">
+        </a-entity>
+      </a-marker>
+      
+      <!-- Model yang ditaruh di posisi tetap -->
+      <a-entity 
+        id="fixedModel"
         gltf-model="#sepatu"
-        visible="false"
-        scale="0.005 0.005 0.005">
+        scale="0.005 0.005 0.005"
+        visible="false">
       </a-entity>
 
-      <a-camera></a-camera>
+      <!-- Kamera -->
+      <a-entity camera></a-entity>
     </a-scene>
 
-    <button id="startAR" style="position: absolute; z-index: 10; top: 20px; left: 20px; padding: 10px;">
-      Start AR
-    </button>
-
     <script>
-      const scene = document.querySelector('a-scene');
-      const model = document.querySelector('#shoes');
-      const startBtn = document.getElementById('startAR');
+      let placed = false;
 
-      startBtn.addEventListener('click', async () => {
-        try {
-          await scene.enterAR();
-          model.setAttribute('position', '0 0 -1');
-          model.setAttribute('visible', true);
-          startBtn.style.display = 'none';
-        } catch (e) {
-          alert('AR not supported or permission denied');
+      const marker = document.querySelector("#marker");
+      const markerModel = document.querySelector("#markerModel");
+      const fixedModel = document.querySelector("#fixedModel");
+      const resetBtn = document.getElementById("resetBtn");
+
+      marker.addEventListener("markerFound", () => {
+        if (!placed) {
+          const pos = new THREE.Vector3();
+          const quat = new THREE.Quaternion();
+          const euler = new THREE.Euler();
+
+          markerModel.object3D.getWorldPosition(pos);
+          markerModel.object3D.getWorldQuaternion(quat);
+          euler.setFromQuaternion(quat, 'YXZ'); // konversi ke rotasi Euler
+
+          fixedModel.object3D.position.copy(pos);
+          fixedModel.object3D.rotation.copy(euler);
+
+          fixedModel.setAttribute("visible", true);
+          markerModel.setAttribute("visible", false);
+          placed = true;
         }
+      });
+
+      resetBtn.addEventListener("click", () => {
+        placed = false;
+        fixedModel.setAttribute("visible", false);
+        markerModel.setAttribute("visible", true);
       });
     </script>
   </body>

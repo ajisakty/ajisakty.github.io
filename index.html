@@ -2,65 +2,55 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Markerless AR Shoes</title>
+    <title>Markerless AR - Shoes</title>
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/aframe-ar@1.8.0/dist/aframe-ar.min.js"></script>
   </head>
   <body style="margin: 0; overflow: hidden;">
     <a-scene
       vr-mode-ui="enabled: false"
       renderer="colorManagement: true; physicallyCorrectLights: true;"
-      webxr="optionalFeatures: hit-test; requiredFeatures: local-floor;"
       xr-mode="immersive-ar"
-      embedded
-      arjs>
+      webxr="optionalFeatures: hit-test; requiredFeatures: hit-test;"
+      embedded>
 
       <a-assets>
         <a-asset-item id="sepatu" src="leather_shoes.glb"></a-asset-item>
       </a-assets>
 
-      <!-- Cahaya -->
+      <!-- Pencahayaan -->
       <a-light type="ambient" intensity="1"></a-light>
       <a-light type="directional" position="0 2 2" intensity="0.7"></a-light>
 
-      <!-- Model Sepatu -->
+      <!-- Model -->
       <a-entity
         id="shoes"
         gltf-model="#sepatu"
-        scale="0.005 0.005 0.005"
-        position="0 0 0"
-        rotation="0 180 0"
-        visible="false">
+        visible="false"
+        scale="0.005 0.005 0.005">
       </a-entity>
 
-      <!-- Kamera -->
-      <a-camera position="0 1.6 0" look-controls-enabled="false"></a-camera>
+      <a-camera></a-camera>
     </a-scene>
 
+    <button id="startAR" style="position: absolute; z-index: 10; top: 20px; left: 20px; padding: 10px;">
+      Start AR
+    </button>
+
     <script>
-      AFRAME.registerComponent('ar-spawn', {
-        init: function () {
-          const el = this.el;
-          const scene = el.sceneEl;
-          const model = document.querySelector('#shoes');
+      const scene = document.querySelector('a-scene');
+      const model = document.querySelector('#shoes');
+      const startBtn = document.getElementById('startAR');
 
-          scene.addEventListener('click', function (e) {
-            const touch = e.touches ? e.touches[0] : e;
-            const x = touch.clientX / window.innerWidth * 2 - 1;
-            const y = -(touch.clientY / window.innerHeight) * 2 + 1;
-
-            const raycaster = new THREE.Raycaster();
-            raycaster.setFromCamera({ x, y }, scene.camera);
-
-            const point = raycaster.ray.origin.clone().add(raycaster.ray.direction.clone().multiplyScalar(1.5));
-            model.setAttribute('position', `${point.x} ${point.y} ${point.z}`);
-            model.setAttribute('visible', true);
-          });
+      startBtn.addEventListener('click', async () => {
+        try {
+          await scene.enterAR();
+          model.setAttribute('position', '0 0 -1');
+          model.setAttribute('visible', true);
+          startBtn.style.display = 'none';
+        } catch (e) {
+          alert('AR not supported or permission denied');
         }
       });
-
-      document.querySelector('a-scene').setAttribute('ar-spawn', '');
     </script>
   </body>
 </html>

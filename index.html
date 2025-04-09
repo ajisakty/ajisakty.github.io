@@ -2,43 +2,65 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>AR Sepatu</title>
-    <!-- A-Frame Core -->
+    <title>Markerless AR Shoes</title>
     <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-    <!-- AR.js for A-Frame -->
-    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.min.js"></script>
-
-    <style>
-      body { margin: 0; overflow: hidden; }
-    </style>
+    <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/aframe-ar@1.8.0/dist/aframe-ar.min.js"></script>
   </head>
-  <body>
-    <a-scene embedded arjs renderer="colorManagement: true; physicallyCorrectLights: true;">
+  <body style="margin: 0; overflow: hidden;">
+    <a-scene
+      vr-mode-ui="enabled: false"
+      renderer="colorManagement: true; physicallyCorrectLights: true;"
+      webxr="optionalFeatures: hit-test; requiredFeatures: local-floor;"
+      xr-mode="immersive-ar"
+      embedded
+      arjs>
 
-      <!-- Cahaya ambient global -->
-      <a-light type="ambient" intensity="1"></a-light>
-    
-      <!-- Cahaya directional dari atas -->
-      <a-light type="directional" position="0 2 2" intensity="0.7" target="#target"></a-light>
-    
-      <!-- Target kosong untuk pencahayaan -->
-      <a-entity id="target" position="0 0 0"></a-entity>
-    
       <a-assets>
         <a-asset-item id="sepatu" src="leather_shoes.glb"></a-asset-item>
       </a-assets>
-    
-      <a-marker preset="hiro">
-        <a-entity 
-          gltf-model="#sepatu"
-          scale="0.005 0.005 0.005"
-          position="0 0 0"
-          rotation="0 180 0">
-        </a-entity>
-      </a-marker>
-    
-      <a-entity camera></a-entity>
+
+      <!-- Cahaya -->
+      <a-light type="ambient" intensity="1"></a-light>
+      <a-light type="directional" position="0 2 2" intensity="0.7"></a-light>
+
+      <!-- Model Sepatu -->
+      <a-entity
+        id="shoes"
+        gltf-model="#sepatu"
+        scale="0.005 0.005 0.005"
+        position="0 0 0"
+        rotation="0 180 0"
+        visible="false">
+      </a-entity>
+
+      <!-- Kamera -->
+      <a-camera position="0 1.6 0" look-controls-enabled="false"></a-camera>
     </a-scene>
-    
+
+    <script>
+      AFRAME.registerComponent('ar-spawn', {
+        init: function () {
+          const el = this.el;
+          const scene = el.sceneEl;
+          const model = document.querySelector('#shoes');
+
+          scene.addEventListener('click', function (e) {
+            const touch = e.touches ? e.touches[0] : e;
+            const x = touch.clientX / window.innerWidth * 2 - 1;
+            const y = -(touch.clientY / window.innerHeight) * 2 + 1;
+
+            const raycaster = new THREE.Raycaster();
+            raycaster.setFromCamera({ x, y }, scene.camera);
+
+            const point = raycaster.ray.origin.clone().add(raycaster.ray.direction.clone().multiplyScalar(1.5));
+            model.setAttribute('position', `${point.x} ${point.y} ${point.z}`);
+            model.setAttribute('visible', true);
+          });
+        }
+      });
+
+      document.querySelector('a-scene').setAttribute('ar-spawn', '');
+    </script>
   </body>
 </html>

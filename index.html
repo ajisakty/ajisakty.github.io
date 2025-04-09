@@ -12,7 +12,10 @@
     </style>
   </head>
   <body>
-    <a-scene embedded arjs renderer="colorManagement: true; physicallyCorrectLights: true;">
+    <a-scene
+  embedded
+  arjs="sourceType: webcam; sourceWidth:1280; sourceHeight:720; displayWidth:1280; displayHeight:720;"
+  renderer="colorManagement: true; physicallyCorrectLights: true;">
 
       <!-- Preload model -->
       <a-assets>
